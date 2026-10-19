@@ -1,0 +1,21 @@
+.relations-panel.relations-panel--editing { display: flex; flex-direction: column; overflow: hidden; }
+.relations-panel--editing > header { flex-shrink: 0; margin-bottom: 16px; }
+.relation-form { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.relation-form__body { display: flex; flex-direction: column; gap: 20px; overflow: auto; padding: 4px 3px; margin: -4px -3px 0; }
+.relation-form__table-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; }
+.relation-form__field { display: flex; flex-direction: column; gap: 6px; min-width: 0; font-size: 14px; font-weight: 500; line-height: 20px; }
+.relation-form__field select { font-weight: 400; }
+.relation-form__criteria { border: 0; padding: 0; margin: 0; min-width: 0; }
+.relation-form__criteria legend { font-size: 14px; font-weight: 500; line-height: 20px; margin-bottom: 6px; padding: 0; }
+.relation-form__column-row { display: grid; grid-template-columns: minmax(0, 1fr) 16px minmax(0, 1fr); gap: 6px; align-items: center; }
+.relation-form__equals { color: var(--muted); text-align: center; font-size: 18px; }
+.relation-form__type { width: calc((100% - 28px) / 2); }
+.relation-form__footer { margin-top: auto; padding: 20px 0 8px; display: flex; justify-content: flex-end; gap: 8px; flex-shrink: 0; background: #fff; }
+.relation-form__button { display: inline-flex; height: 36px; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: 6px; padding: 8px 16px; font-size: 14px; font-weight: 500; line-height: 20px; box-shadow: 0 1px 2px #0000000d; transition: background-color .15s, box-shadow .15s; }
+.relation-form__button--outline { background: #fff; border-color: var(--input-border); }
+.relation-form__button--primary { background: var(--brand); color: #fff; }
+.relation-form__button--primary:not(:disabled):hover { background: #2f47a0; }
+.relation-form__button:focus-visible { outline: none; box-shadow: 0 0 0 3px #476bf04d; }
+.relation-form__button:disabled { opacity: .5; pointer-events: none; }
+.relation-form__error { margin: 0; color: #dc2626; font-size: 13px; line-height: 20px; }
+@media (max-width: 1600px) { .relation-form__table-row { gap: 12px; } .relation-form__type { width: 100%; } .relation-form .native-select { padding-left: 8px; } }
