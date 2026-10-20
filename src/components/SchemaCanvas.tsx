@@ -29,7 +29,7 @@ import { CanvasControls } from './CanvasControls'
 import { alignTable, type AlignmentGuide } from './snapAlignment'
 import { connectionSides } from './connectionRouting'
 import { connectionLabels } from './connectionLabels'
-import { findFreePosition, organizeTables, tableBounds } from './canvasLayout'
+import { findFreePosition, organizeTables, separateUnconnectedTables, tableBounds } from './canvasLayout'
 import { TABLE_DND_TYPE } from '../dnd'
 import type { DemoCase } from '../data/demoCases'
 import type { DataTable, RelationType } from '../types'
@@ -65,8 +65,14 @@ function initialGraph(demoCase: DemoCase) {
     id: relation.id, source: relation.sourceTableId, target: relation.targetTableId,
     sourceHandle: `${relation.sourceColumnId}-source`, targetHandle: `${relation.targetColumnId}-target`, type: 'relation', data: { relationType: relation.type },
   }))
-  const nodes = demoCase.tables.filter((table) => ids.has(table.id)).map((table) => tableToNode(table, defaultPositions[table.id] ?? { x: 60, y: 60 }))
-  return { nodes: demoCase.id === 'complex' ? organizeTables(nodes, edges) : nodes, edges }
+  const nodes: TableFlowNode[] = []
+  for (const table of demoCase.tables) {
+    if (!ids.has(table.id)) continue
+    const node = tableToNode(table, defaultPositions[table.id] ?? { x: 60, y: 850 })
+    if (!defaultPositions[table.id]) node.position = findFreePosition(node, nodes)
+    nodes.push(node)
+  }
+  return { nodes: demoCase.id === 'complex' ? organizeTables(nodes, edges) : separateUnconnectedTables(nodes, edges), edges }
 }
 
 export type SchemaCanvasHandle = {
@@ -92,7 +98,7 @@ export const SchemaCanvas = forwardRef<SchemaCanvasHandle, SchemaCanvasProps>(
     const relationsForTables = useCallback((tableIds: Set<string>): RelationFlowEdge[] => demoCase.relations
       .filter((relation) => tableIds.has(relation.sourceTableId) && tableIds.has(relation.targetTableId))
       .map((relation) => ({ id: relation.id, source: relation.sourceTableId, target: relation.targetTableId, sourceHandle: `${relation.sourceColumnId}-source`, targetHandle: `${relation.targetColumnId}-target`, type: 'relation', data: { relationType: relation.type } })), [demoCase.relations])
-    const { screenToFlowPosition, fitView, setViewport, getViewport } = useReactFlow()
+    const { screenToFlowPosition, fitView, getViewport } = useReactFlow()
     const [guides, setGuides] = useState<AlignmentGuide[]>([])
     const onAlignedNodesChange = useCallback((changes: NodeChange<TableFlowNode>[]) => {
       const positions = changes.filter((change) => change.type === 'position' && change.position)
@@ -113,14 +119,13 @@ export const SchemaCanvas = forwardRef<SchemaCanvasHandle, SchemaCanvasProps>(
     const nodesInitialized = useNodesInitialized()
     const overviewInitialized = useRef(false)
     useEffect(() => {
-      if (demoCase.id !== 'complex' || !nodesInitialized || overviewInitialized.current) return
+      if (!nodesInitialized || overviewInitialized.current) return
       const frame = requestAnimationFrame(() => {
         void fitView({ padding: .15, maxZoom: 1, minZoom: .05 })
         overviewInitialized.current = true
       })
       return () => cancelAnimationFrame(frame)
     }, [demoCase.id, nodesInitialized, fitView])
-    const viewportInitialized = useRef(false)
     useEffect(() => {
       if (!needsFit.current) return
       const frame = requestAnimationFrame(() => {
@@ -129,22 +134,6 @@ export const SchemaCanvas = forwardRef<SchemaCanvasHandle, SchemaCanvasProps>(
       })
       return () => cancelAnimationFrame(frame)
     }, [nodes, fitView])
-    useEffect(() => {
-      if (!canvasElement.current) return
-      let frame = 0
-      const observer = new ResizeObserver(() => {
-        cancelAnimationFrame(frame)
-        frame = requestAnimationFrame(() => {
-          const bounds = canvasElement.current?.getBoundingClientRect()
-          if (bounds && bounds.width > 0 && bounds.height > 0 && !viewportInitialized.current) {
-            viewportInitialized.current = true
-            if (demoCase.id === 'simple') void setViewport({ x: 0, y: 0, zoom: Math.min(1, bounds.width / 1082, bounds.height / 906) })
-          }
-        })
-      })
-      observer.observe(canvasElement.current)
-      return () => { observer.disconnect(); cancelAnimationFrame(frame) }
-    }, [setViewport, demoCase.id])
     const [relationsWidth, setRelationsWidth] = useState(() => window.innerWidth < 1600 ? 400 : 520)
     const [editing, setEditing] = useState(false)
 
@@ -332,7 +321,7 @@ export const SchemaCanvas = forwardRef<SchemaCanvasHandle, SchemaCanvasProps>(
           proOptions={{ hideAttribution: true }}
           deleteKeyCode={null}
         >
-          <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#b8c3d1" />
+          <Background id={`grid-${demoCase.id}`} variant={BackgroundVariant.Dots} gap={20} size={1.5} color="#a8b6c8" />
           <CanvasControls minZoom={demoCase.id === 'complex' ? .05 : .25} />
           <CanvasScrollbars nodes={nodes} canvasId={`canvas-${demoCase.id}`} />
         </ReactFlow>

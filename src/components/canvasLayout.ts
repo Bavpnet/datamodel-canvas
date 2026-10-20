@@ -5,7 +5,7 @@ export function tableBounds(node: TableFlowNode) {
   return {
     ...node.position,
     width: node.measured?.width ?? node.width ?? 225,
-    height: node.measured?.height ?? (58 + node.data.table.columns.length * 40),
+    height: node.measured?.height ?? (node.data.collapsed ? 50 : 59 + node.data.table.columns.length * 40),
   }
 }
 
@@ -28,9 +28,36 @@ export function findFreePosition(node: TableFlowNode, existing: TableFlowNode[],
   )) ?? { x: Math.max(40, ...occupied.map((rect) => rect.x + rect.width + gap)), y: 40 }
 }
 
+/** Keep unconnected tables in a separate grid outside the schema's bounding box. */
+export function separateUnconnectedTables(nodes: TableFlowNode[], edges: RelationFlowEdge[]) {
+  const connectedIds = new Set(edges.flatMap((edge) => [edge.source, edge.target]))
+  const connected = nodes.filter((node) => connectedIds.has(node.id))
+  const isolated = nodes.filter((node) => !connectedIds.has(node.id))
+  if (!isolated.length) return nodes
+  const startX = connected.length ? Math.max(...connected.map((node) => { const bounds = tableBounds(node); return bounds.x + bounds.width })) + 240 : 60
+  const startY = connected.length ? Math.min(...connected.map((node) => node.position.y)) : 60
+  const columns = Math.min(3, Math.ceil(Math.sqrt(isolated.length)))
+  const columnWidths = Array.from({ length: columns }, (_, col) => Math.max(...isolated.filter((_, index) => index % columns === col).map((node) => tableBounds(node).width)))
+  const positions = new Map<string, { x: number; y: number }>()
+  let y = startY
+  for (let row = 0; row * columns < isolated.length; row++) {
+    const items = isolated.slice(row * columns, (row + 1) * columns)
+    let x = startX
+    items.forEach((node, col) => { positions.set(node.id, { x, y }); x += columnWidths[col] + 64 })
+    y += Math.max(...items.map((node) => tableBounds(node).height)) + 64
+  }
+  return nodes.map((node) => positions.has(node.id) ? { ...node, position: positions.get(node.id)! } : node)
+}
+
 /** Visual star layout; choose a likely fact table using many-side relations and degree. */
 export function organizeTables(nodes: TableFlowNode[], edges: RelationFlowEdge[]): TableFlowNode[] {
   if (!nodes.length) return nodes
+  const connectedIds = new Set(edges.flatMap((edge) => [edge.source, edge.target]))
+  const connected = nodes.filter((node) => connectedIds.has(node.id))
+  if (connected.length !== nodes.length) {
+    const arranged = new Map(organizeTables(connected, edges).map((node) => [node.id, node]))
+    return separateUnconnectedTables(nodes.map((node) => arranged.get(node.id) ?? node), edges)
+  }
   const byId = new Map(nodes.map((node) => [node.id, node]))
   const adjacent = new Map(nodes.map((node) => [node.id, new Set<string>()]))
   const manySides = new Map(nodes.map((node) => [node.id, 0]))

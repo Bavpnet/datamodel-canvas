@@ -58,6 +58,6 @@ const complexRelations: RelationDef[] = links.map(([sourceTableId, sourceColumnI
 }))
 
 export const demoCases: DemoCase[] = [
-  { id: 'simple', name: 'Простой пример', tables: dataModel, relations: predefinedRelations, initialTableIds: ['execution', 'task', 'project', 'tariff'] },
+  { id: 'simple', name: 'Простой пример', tables: dataModel, relations: predefinedRelations.filter((relation) => ['execution-task', 'task-project', 'execution-tariff'].includes(relation.id)), initialTableIds: dataModel.map((table) => table.id) },
   { id: 'complex', name: 'Интернет-магазин', tables: complexTables, relations: complexRelations, initialTableIds: complexTables.map((table) => table.id) },
 ]
