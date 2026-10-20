@@ -67,7 +67,7 @@ export function RelationEdge({
           aria-label={`Выбрать связь ${id}, ${relationType}, ${label.value}`}
           aria-pressed={selected}
           title={`Тип связи ${relationType}. Нажмите, чтобы выделить`}
-        >{label.value}</button>)}
+        ><span className="relation-edge__label-text">{label.value}</span></button>)}
       </EdgeLabelRenderer>
     </>
   )

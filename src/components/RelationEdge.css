@@ -1,3 +1,4 @@
 .relation-edge__label { position: absolute; z-index: 1; display: grid; place-items: center; width: 24px; height: 24px; padding: 4px; border: 0; border-radius: 4px; background: var(--muted); color: #fff; font-size: 12px; line-height: 16px; font-weight: 500; pointer-events: all; cursor: pointer; }
 .relation-edge__label.is-selected, .relation-edge__label:hover { background: var(--brand) !important; }
 .relation-edge__label.is-selected { z-index: 4000; }
+.relation-edge__label-text { color: #fff; -webkit-text-fill-color: #fff; opacity: 1; font-weight: 600; text-shadow: none; }

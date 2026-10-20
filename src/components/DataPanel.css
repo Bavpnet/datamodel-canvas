@@ -8,6 +8,7 @@
 .data-panel__list { list-style: none; margin: 0; padding: 6px 0; display: flex; flex-direction: column; gap: 10px; }
 .data-panel__table { position: relative; display: flex; align-items: center; cursor: grab; }
 .data-panel__table-toggle { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; height: 32px; padding: 6px; border: 0; border-radius: 6px; background: transparent; text-align: left; }
+.data-panel__table-toggle .design-icon { color: #171717; }
 .data-panel__table-toggle span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; line-height: 18px; letter-spacing: -.15px; }
 .data-panel__chevron.is-open { transform: rotate(180deg); }
 .data-panel__columns { display: flex; flex-direction: column; gap: 8px; list-style: none; margin: 10px 0 0; padding: 0; }

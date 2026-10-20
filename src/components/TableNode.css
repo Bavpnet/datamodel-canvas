@@ -11,6 +11,7 @@
 .table-node__column-button svg, .table-node__column-button img { flex-shrink: 0; width: 16px; height: 16px; color: var(--muted); }
 .table-node__column-button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .table-node__column .table-node__column-button:hover { background: transparent; }
+.table-node__column:not(.is-active):hover { background: #fafafa; }
 .table-node__column.is-active, .table-node__column.is-active button { background: var(--brand-light); }
 .table-node .table-node__handle { width: 8px; height: 8px; background: var(--muted); border: 1px solid #fff; box-shadow: var(--shadow); min-height: 8px; min-width: 8px; opacity: 1; pointer-events: none; }
 .table-node .table-node__handle--left { left: 0; }
