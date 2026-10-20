@@ -19,3 +19,4 @@
 .data-panel__empty { color: var(--muted); font-size: 13px; }
 .data-panel__column { width: 100%; border: 0; border-radius: 6px; background: transparent; text-align: left; }
 .data-panel__column.is-active, .data-panel__column.is-active:hover { background: var(--brand-light); color: #171717; }
+.data-panel__column.is-unconnected { cursor: default; }

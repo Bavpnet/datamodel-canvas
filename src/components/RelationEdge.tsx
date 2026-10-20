@@ -55,7 +55,7 @@ export function RelationEdge({
         style={{ stroke: selected ? '#476bf0' : '#606f85', strokeWidth: selected ? 2 : 1 }}
       />
       <EdgeLabelRenderer>
-        {[{ visible: data?.sourceLabelVisible !== false, value: relationType.split(':')[0], x: sourceX + (sourcePosition === Position.Left ? -21 : 21), y: sourceY - 16 }, { visible: data?.targetLabelVisible !== false, value: relationType.split(':')[1], x: targetX + (targetPosition === Position.Left ? -21 : 21), y: targetY - 16 }].map((label, index) => label.visible && <button
+        {[{ visible: data?.sourceLabelVisible !== false, value: relationType.split(':')[0], x: data?.sourceLabelX ?? sourceX + (sourcePosition === Position.Left ? -21 : 21), y: sourceY - 16 }, { visible: data?.targetLabelVisible !== false, value: relationType.split(':')[1], x: data?.targetLabelX ?? targetX + (targetPosition === Position.Left ? -21 : 21), y: targetY - 16 }].map((label, index) => label.visible && <button
           key={index}
           type="button"
           className={`relation-edge__label nodrag nopan ${selected ? 'is-selected' : ''}`}

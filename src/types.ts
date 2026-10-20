@@ -27,6 +27,8 @@ export type RelationDef = {
 export type TableNodeData = {
   table: DataTable
   collapsed?: boolean
+  expandedHeight?: number
+  onHeightChange?: (tableId: string, height: number, fromTop: boolean) => void
   onCollapsedChange?: (tableId: string, collapsed: boolean) => void
   connections?: { columnId: string; side: 'source' | 'target'; position: 'left' | 'right'; active: boolean }[]
   activeColumnIds?: string[]
@@ -37,4 +39,6 @@ export type RelationEdgeData = {
   relationType: RelationType
   sourceLabelVisible?: boolean
   targetLabelVisible?: boolean
+  sourceLabelX?: number
+  targetLabelX?: number
 }

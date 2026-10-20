@@ -8,10 +8,11 @@ type DataPanelProps = {
   dataModel: DataTable[]
   placedTableIds: Set<string>
   activeFieldKeys: Set<string>
+  connectedFieldKeys: Set<string>
   onSelectField: (tableId: string, columnId: string) => void
 }
 
-export function DataPanel({ dataModel, placedTableIds, activeFieldKeys, onSelectField }: DataPanelProps) {
+export function DataPanel({ dataModel, placedTableIds, activeFieldKeys, connectedFieldKeys, onSelectField }: DataPanelProps) {
   const [query, setQuery] = useState('')
   const [openIds, setOpenIds] = useState<Set<string>>(
     () => new Set(dataModel.map((table) => table.id)),
@@ -77,13 +78,17 @@ export function DataPanel({ dataModel, placedTableIds, activeFieldKeys, onSelect
               </div>
               {open && (
                 <ul className="data-panel__columns">
-                  {table.columns.map((column) => (
+                  {table.columns.map((column) => {
+                    const key = `${table.id}/${column.id}`
+                    const connected = connectedFieldKeys.has(key)
+                    const Field = connected ? 'button' : 'span'
+                    return (
                     <li key={column.id}>
-                    <button type="button" className={`data-panel__column ${activeFieldKeys.has(`${table.id}/${column.id}`) ? 'is-active' : ''}`} onClick={() => onSelectField(table.id, column.id)} aria-pressed={activeFieldKeys.has(`${table.id}/${column.id}`)}>
+                    <Field title={connected ? undefined : 'Нет связи'} type={connected ? 'button' : undefined} className={`data-panel__column ${connected ? '' : 'is-unconnected'} ${connected && activeFieldKeys.has(key) ? 'is-active' : ''}`} onClick={connected ? () => onSelectField(table.id, column.id) : undefined} aria-pressed={connected ? activeFieldKeys.has(key) : undefined}>
                       <DesignIcon name={`panel-${({ text: 'type', number: 'hash', date: 'calendar', calc: 'calculator' } as const)[column.kind]}`} className="data-panel__kind" />
                       <span>{column.name}</span>
-                    </button></li>
-                  ))}
+                    </Field></li>
+                  )})}
                 </ul>
               )}
             </li>

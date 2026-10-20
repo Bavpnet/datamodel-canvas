@@ -5,7 +5,7 @@ export function tableBounds(node: TableFlowNode) {
   return {
     ...node.position,
     width: node.measured?.width ?? node.width ?? 225,
-    height: node.measured?.height ?? (node.data.collapsed ? 50 : 59 + node.data.table.columns.length * 40),
+    height: node.data.collapsed ? 50 : node.data.expandedHeight ?? node.measured?.height ?? Math.max(100, Math.min(500, 59 + node.data.table.columns.length * 40)),
   }
 }
 

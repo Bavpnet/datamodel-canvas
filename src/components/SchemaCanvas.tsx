@@ -85,12 +85,13 @@ type SchemaCanvasProps = {
   demoCase: DemoCase
   onPlacedChange: (ids: Set<string>) => void
   onActiveFieldsChange: (keys: Set<string>) => void
+  onConnectedFieldsChange: (keys: Set<string>) => void
   showRelations: boolean
   onCloseRelations: () => void
 }
 
 export const SchemaCanvas = forwardRef<SchemaCanvasHandle, SchemaCanvasProps>(
-  function SchemaCanvas({ demoCase, onPlacedChange, onActiveFieldsChange, showRelations, onCloseRelations }, ref) {
+  function SchemaCanvas({ demoCase, onPlacedChange, onActiveFieldsChange, onConnectedFieldsChange, showRelations, onCloseRelations }, ref) {
     const [initial] = useState(() => initialGraph(demoCase))
     const dataModel = demoCase.tables
     const [nodes, setNodes, onNodesChange] = useNodesState(initial.nodes)
@@ -156,16 +157,24 @@ export const SchemaCanvas = forwardRef<SchemaCanvasHandle, SchemaCanvasProps>(
     }, [setEdges])
 
     const selectField = useCallback((tableId: string, columnId: string) => {
-      setNodes((current) => current.map((node) => node.id === tableId && node.data.collapsed ? { ...node, data: { ...node.data, collapsed: false } } : node))
       setSelectedFieldKey(`${tableId}/${columnId}`)
       setEdges((current) => current.map((edge) => ({ ...edge, selected:
         (edge.source === tableId && edge.sourceHandle === `${columnId}-source`) ||
         (edge.target === tableId && edge.targetHandle === `${columnId}-target`)
       })))
-    }, [setEdges, setNodes])
+    }, [setEdges])
 
     const setCollapsed = useCallback((tableId: string, collapsed: boolean) => {
       setNodes((current) => current.map((node) => node.id === tableId ? { ...node, data: { ...node.data, collapsed } } : node))
+    }, [setNodes])
+
+    const setTableHeight = useCallback((tableId: string, height: number, fromTop: boolean) => {
+      setNodes((current) => current.map((node) => {
+        if (node.id !== tableId) return node
+        const nextHeight = Math.max(100, Math.min(500, height))
+        const previousHeight = tableBounds(node).height
+        return { ...node, position: fromTop ? { ...node.position, y: node.position.y + previousHeight - nextHeight } : node.position, data: { ...node.data, expandedHeight: nextHeight } }
+      }))
     }, [setNodes])
 
     const connectorSides = useMemo(() => {
@@ -179,8 +188,9 @@ export const SchemaCanvas = forwardRef<SchemaCanvasHandle, SchemaCanvasProps>(
     const displayEdges = useMemo(() => connectionLabels(edges.map((edge) => {
       const sides = connectorSides.get(edge.id)
       const elevated = { ...edge, zIndex: edge.selected ? 2000 : 0 }
-      return sides ? { ...elevated, sourceHandle: `${edge.sourceHandle}-${sides.source}`, targetHandle: `${edge.targetHandle}-${sides.target}` } : elevated
-    }).sort((a, b) => Number(!!a.selected) - Number(!!b.selected)), nodes), [edges, connectorSides, nodes])
+      const a = nodes.find((node) => node.id === edge.source), b = nodes.find((node) => node.id === edge.target)
+      return sides && a && b ? { ...elevated, sourceHandle: `${edge.sourceHandle}-${sides.source}`, targetHandle: `${edge.targetHandle}-${sides.target}`, data: { ...edge.data!, sourceLabelX: sides.source === 'left' ? a.position.x - 16 : a.position.x + tableBounds(a).width + 16, targetLabelX: sides.target === 'left' ? b.position.x - 16 : b.position.x + tableBounds(b).width + 16 } } : elevated
+    }).sort((a, b) => Number(!!a.selected) - Number(!!b.selected))), [edges, connectorSides, nodes])
 
     const displayNodes = useMemo(() => nodes.map((node) => {
       const connections: NonNullable<TableFlowNode['data']['connections']> = []
@@ -196,8 +206,8 @@ export const SchemaCanvas = forwardRef<SchemaCanvasHandle, SchemaCanvasProps>(
           else connections.push({ columnId, side, position, active: !!edge.selected })
         }
       }
-      return { ...node, data: { ...node.data, connections, activeColumnIds: [...connections.filter((c) => c.active).map((c) => c.columnId), ...node.data.table.columns.filter((c) => selectedFieldKey === `${node.id}/${c.id}`).map((c) => c.id)], onSelectField: selectField, onCollapsedChange: setCollapsed } }
-    }), [nodes, edges, selectField, selectedFieldKey, connectorSides, setCollapsed])
+      return { ...node, data: { ...node.data, connections, activeColumnIds: [...connections.filter((c) => c.active).map((c) => c.columnId), ...node.data.table.columns.filter((c) => selectedFieldKey === `${node.id}/${c.id}`).map((c) => c.id)], onSelectField: selectField, onCollapsedChange: setCollapsed, onHeightChange: setTableHeight } }
+    }), [nodes, edges, selectField, selectedFieldKey, connectorSides, setCollapsed, setTableHeight])
 
     useEffect(() => {
       const fields = new Set<string>()
@@ -218,6 +228,13 @@ export const SchemaCanvas = forwardRef<SchemaCanvasHandle, SchemaCanvasProps>(
     useEffect(() => {
       onPlacedChange(new Set(nodes.map((node) => node.id)))
     }, [nodes, onPlacedChange])
+
+    useEffect(() => {
+      onConnectedFieldsChange(new Set(edges.flatMap((edge) => [
+        `${edge.source}/${edge.sourceHandle?.replace(/-source$/, '')}`,
+        `${edge.target}/${edge.targetHandle?.replace(/-target$/, '')}`,
+      ])))
+    }, [edges, onConnectedFieldsChange])
 
     const addTableAt = useCallback(
       (table: DataTable, position: { x: number; y: number }) => {
