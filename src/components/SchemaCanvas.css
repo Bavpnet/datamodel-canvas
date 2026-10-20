@@ -18,7 +18,7 @@
 .relations-empty { color: var(--muted); line-height: 22px; }
 
 .schema-canvas .react-flow__controls-button { color: var(--icon); }
-.schema-canvas .react-flow__controls-button svg { width: 16px; height: 16px; max-width: 16px; max-height: 16px; fill: currentColor; }
+.schema-canvas .react-flow__controls-button svg { width: 14px; height: 14px; max-width: 14px; max-height: 14px; fill: none; }
 .relations-panel-shell { position: relative; min-width: 400px; max-width: 650px; min-height: 0; height: 100%; }
 .relations-panel-resizer { position: absolute; z-index: 20; left: -5px; top: 0; bottom: 0; width: 10px; background: transparent; cursor: ew-resize; touch-action: none; user-select: none; outline: none; }
 .relations-panel-resizer::after { content: ''; position: absolute; top: 0; bottom: 0; left: 5px; width: 1px; background: var(--brand); opacity: 0; }

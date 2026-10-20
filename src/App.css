@@ -3,6 +3,7 @@
 .nav-logo { width: 32px; height: 32px; margin-bottom: 20px; }
 .nav-items { display: flex; flex-direction: column; gap: 16px; border-top: 2px solid var(--border); padding-top: 26px; }
 .nav-items .icon-button { width: 36px; height: 36px; }
+.nav-rail .design-icon { color: #171717; }
 .nav-bottom { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 16px; }
 .avatar { width: 36px; height: 36px; border-radius: 50%; background: #e2e8f0; display: grid; place-items: center; font-size: 16px; }
 .nav-expand { background: var(--brand-light) !important; border-radius: 50% !important; width: 36px !important; height: 36px !important; }

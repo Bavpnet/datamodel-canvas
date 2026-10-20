@@ -1,5 +1,5 @@
 import { Handle, NodeResizeControl, ResizeControlVariant, Position, useStore, useUpdateNodeInternals, type Node, type NodeProps } from '@xyflow/react'
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import type { TableNodeData } from '../types'
 import { DesignIcon } from './DesignIcon'
 import { KindIcon } from './icons'
@@ -14,8 +14,9 @@ export function TableNode({ id, data, width }: NodeProps<TableFlowNode>) {
   const [resizingSide, setResizingSide] = useState<'left' | 'right' | null>(null)
   const connectionKeys = connections.map((c) => `${c.columnId}/${c.side}/${c.position}`).join(',')
   useEffect(() => { update(id) }, [collapsed, connectionKeys, width, id, update])
-  const renderHandle = (connection: (typeof connections)[number]) => <Handle
-    key={`${connection.columnId}-${connection.side}-${connection.position}`}
+  const renderHandle = (connection: (typeof connections)[number]) => <Fragment key={`${connection.columnId}-${connection.side}-${connection.position}`}>
+    <span aria-hidden="true" className={`table-node__connection-lead table-node__connection-lead--${connection.position} ${connection.active ? 'is-active' : ''}`} />
+    <Handle
     type={connection.side}
     position={connection.position === 'right' ? Position.Right : Position.Left}
     id={`${connection.columnId}-${connection.side}-${connection.position}`}
@@ -23,7 +24,7 @@ export function TableNode({ id, data, width }: NodeProps<TableFlowNode>) {
     isConnectableStart={false}
     isConnectableEnd={false}
     className={`table-node__handle table-node__handle--${connection.position} ${connection.active ? 'is-active' : ''}`}
-  />
+  /></Fragment>
   return <>{(['left', 'right'] as const).map((side) => <NodeResizeControl
     key={side}
     position={side}

@@ -1,7 +1,6 @@
 import {
   Background,
   BackgroundVariant,
-  Controls,
   ReactFlow,
   addEdge,
   useEdgesState,
@@ -25,6 +24,8 @@ import {
 } from 'react'
 import { EdgeBridgeProvider } from './EdgeBridgeProvider'
 import { AlignmentGuides } from './AlignmentGuides'
+import { CanvasScrollbars } from './CanvasScrollbars'
+import { CanvasControls } from './CanvasControls'
 import { alignTable, type AlignmentGuide } from './snapAlignment'
 import { connectionSides } from './connectionRouting'
 import { findFreePosition, organizeTables, tableBounds } from './canvasLayout'
@@ -71,7 +72,6 @@ export type SchemaCanvasHandle = {
   selectField: (tableId: string, columnId: string) => void
   organize: () => void
   fit: () => void
-  exportSchema: () => void
 }
 
 type SchemaCanvasProps = {
@@ -281,13 +281,9 @@ export const SchemaCanvas = forwardRef<SchemaCanvasHandle, SchemaCanvasProps>(
           setNodes((current) => organizeTables(current, edges))
         },
         fit: () => { void fitView({ padding: .12, duration: 300 }) },
-        exportSchema: () => {
-          const url = URL.createObjectURL(new Blob([JSON.stringify({ nodes, edges }, null, 2)], { type: 'application/json' }))
-          const link = document.createElement('a'); link.href = url; link.download = 'datamodel.json'; link.click(); URL.revokeObjectURL(url)
-        },
         selectField,
       }),
-      [nodes, edges, fitView, selectField, setNodes],
+      [edges, fitView, selectField, setNodes],
     )
 
     const onDragOver = useCallback((event: DragEvent) => {
@@ -308,7 +304,7 @@ export const SchemaCanvas = forwardRef<SchemaCanvasHandle, SchemaCanvasProps>(
 
     return (
       <EdgeBridgeProvider order={displayEdges.map((edge) => edge.id)}>
-      <div className={`canvas-layout ${showRelations ? 'with-relations' : ''}`} style={{ '--relations-width': `${relationsWidth}px` } as CSSProperties}><div className="schema-canvas" ref={canvasElement}>
+      <div className={`canvas-layout ${showRelations ? 'with-relations' : ''}`} style={{ '--relations-width': `${relationsWidth}px` } as CSSProperties}><div className="schema-canvas" id={`canvas-${demoCase.id}`} ref={canvasElement}>
         <ReactFlow
           nodes={displayNodes}
           edges={displayEdges}
@@ -331,7 +327,8 @@ export const SchemaCanvas = forwardRef<SchemaCanvasHandle, SchemaCanvasProps>(
           deleteKeyCode={null}
         >
           <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#b8c3d1" />
-          <Controls showInteractive={false} />
+          <CanvasControls minZoom={demoCase.id === 'complex' ? .05 : .25} />
+          <CanvasScrollbars nodes={nodes} canvasId={`canvas-${demoCase.id}`} />
         </ReactFlow>
         <AlignmentGuides guides={guides} />
 
