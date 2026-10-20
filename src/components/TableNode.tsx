@@ -7,8 +7,7 @@ import './TableNode.css'
 
 export type TableFlowNode = Node<TableNodeData, 'table'>
 export function TableNode({ id, data, width }: NodeProps<TableFlowNode>) {
-  const { table, connections = [], activeColumnIds = [], onSelectField } = data
-  const [collapsed, setCollapsed] = useState(false)
+  const { table, connections = [], activeColumnIds = [], onSelectField, collapsed = false, onCollapsedChange } = data
   const update = useUpdateNodeInternals()
   const zoom = useStore((state) => state.transform[2])
   const [resizingSide, setResizingSide] = useState<'left' | 'right' | null>(null)
@@ -41,7 +40,7 @@ export function TableNode({ id, data, width }: NodeProps<TableFlowNode>) {
     <header className="table-node__header">
       <DesignIcon name="database" />
       <span className="table-node__name" title={table.name}>{table.name}</span>
-      <button className="table-node__collapse nodrag" onClick={(event) => { event.stopPropagation(); setCollapsed(!collapsed) }} aria-label={`${collapsed ? 'Развернуть' : 'Свернуть'} ${table.name}`} aria-expanded={!collapsed}><DesignIcon name={collapsed ? 'down' : 'up'} /></button>
+      <button className="table-node__collapse nodrag" onClick={(event) => { event.stopPropagation(); onCollapsedChange?.(id, !collapsed) }} aria-label={`${collapsed ? 'Развернуть' : 'Свернуть'} ${table.name}`} aria-expanded={!collapsed}><DesignIcon name={collapsed ? 'down' : 'up'} /></button>
       {collapsed && <>
         {connections.map(renderHandle)}
         {(['left', 'right'] as const).filter((side) => connections.some((connection) => connection.position === side)).map((side) => <span

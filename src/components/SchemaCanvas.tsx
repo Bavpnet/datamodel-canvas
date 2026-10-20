@@ -28,6 +28,7 @@ import { CanvasScrollbars } from './CanvasScrollbars'
 import { CanvasControls } from './CanvasControls'
 import { alignTable, type AlignmentGuide } from './snapAlignment'
 import { connectionSides } from './connectionRouting'
+import { connectionLabels } from './connectionLabels'
 import { findFreePosition, organizeTables, tableBounds } from './canvasLayout'
 import { TABLE_DND_TYPE } from '../dnd'
 import type { DemoCase } from '../data/demoCases'
@@ -166,12 +167,17 @@ export const SchemaCanvas = forwardRef<SchemaCanvasHandle, SchemaCanvasProps>(
     }, [setEdges])
 
     const selectField = useCallback((tableId: string, columnId: string) => {
+      setNodes((current) => current.map((node) => node.id === tableId && node.data.collapsed ? { ...node, data: { ...node.data, collapsed: false } } : node))
       setSelectedFieldKey(`${tableId}/${columnId}`)
       setEdges((current) => current.map((edge) => ({ ...edge, selected:
         (edge.source === tableId && edge.sourceHandle === `${columnId}-source`) ||
         (edge.target === tableId && edge.targetHandle === `${columnId}-target`)
       })))
-    }, [setEdges])
+    }, [setEdges, setNodes])
+
+    const setCollapsed = useCallback((tableId: string, collapsed: boolean) => {
+      setNodes((current) => current.map((node) => node.id === tableId ? { ...node, data: { ...node.data, collapsed } } : node))
+    }, [setNodes])
 
     const connectorSides = useMemo(() => {
       const byId = new Map(nodes.map((node) => [node.id, node]))
@@ -181,11 +187,11 @@ export const SchemaCanvas = forwardRef<SchemaCanvasHandle, SchemaCanvasProps>(
       }))
     }, [nodes, edges])
 
-    const displayEdges = useMemo(() => edges.map((edge) => {
+    const displayEdges = useMemo(() => connectionLabels(edges.map((edge) => {
       const sides = connectorSides.get(edge.id)
       const elevated = { ...edge, zIndex: edge.selected ? 2000 : 0 }
       return sides ? { ...elevated, sourceHandle: `${edge.sourceHandle}-${sides.source}`, targetHandle: `${edge.targetHandle}-${sides.target}` } : elevated
-    }).sort((a, b) => Number(!!a.selected) - Number(!!b.selected)), [edges, connectorSides])
+    }).sort((a, b) => Number(!!a.selected) - Number(!!b.selected)), nodes), [edges, connectorSides, nodes])
 
     const displayNodes = useMemo(() => nodes.map((node) => {
       const connections: NonNullable<TableFlowNode['data']['connections']> = []
@@ -201,8 +207,8 @@ export const SchemaCanvas = forwardRef<SchemaCanvasHandle, SchemaCanvasProps>(
           else connections.push({ columnId, side, position, active: !!edge.selected })
         }
       }
-      return { ...node, data: { ...node.data, connections, activeColumnIds: [...connections.filter((c) => c.active).map((c) => c.columnId), ...node.data.table.columns.filter((c) => selectedFieldKey === `${node.id}/${c.id}`).map((c) => c.id)], onSelectField: selectField } }
-    }), [nodes, edges, selectField, selectedFieldKey, connectorSides])
+      return { ...node, data: { ...node.data, connections, activeColumnIds: [...connections.filter((c) => c.active).map((c) => c.columnId), ...node.data.table.columns.filter((c) => selectedFieldKey === `${node.id}/${c.id}`).map((c) => c.id)], onSelectField: selectField, onCollapsedChange: setCollapsed } }
+    }), [nodes, edges, selectField, selectedFieldKey, connectorSides, setCollapsed])
 
     useEffect(() => {
       const fields = new Set<string>()
