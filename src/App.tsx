@@ -26,7 +26,7 @@ export default function App() {
       <div className="app__workspace">
         <header className="app__header">
           <div className="project-name">Новый проект <Icon name="down" /></div>
-          <div className="header-actions"><span className="session-note">Прототип · изменения в текущей сессии</span><button className="icon-button outlined" title="Вписать схему" onClick={() => canvasRef.current?.fit()}><Icon name="refresh" /></button><button className="outlined" type="button">Поделиться</button></div>
+          <div className="header-actions"><span className="session-note">Прототип · изменения в текущей сессии</span><button className="icon-button outlined" title="Обновить — недоступно в прототипе" aria-label="Обновить — недоступно в прототипе" disabled><Icon name="refresh" /></button><button className="outlined" type="button">Поделиться</button></div>
         </header>
         <div className="workspace-toolbar"><button onClick={() => setShowData(!showData)}>Данные <Icon name="down" /></button><span className="toolbar-divider" /><button onClick={() => setShowRelations(!showRelations)} aria-pressed={showRelations}>Связи</button><button className="organize-button" title="Звезда: основная таблица в центре, связанные — вокруг" onClick={() => canvasRef.current?.organize()}>Упорядочить таблицы</button><button className={`icon-button data-toggle ${showData ? 'is-active' : ''}`} title="Панель данных" onClick={() => setShowData(!showData)} aria-pressed={showData}><Icon name="panel" /></button></div>
         <div className="app__cases">

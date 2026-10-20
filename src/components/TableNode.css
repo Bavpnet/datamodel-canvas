@@ -13,6 +13,7 @@
 .table-node__column-button { display: flex; align-items: center; gap: 8px; width: 100%; height: 32px; border: 0; border-radius: 6px; background: transparent; padding: 4px 6px; font-size: 14px; line-height: 18px; letter-spacing: -.15px; text-align: left; }
 .table-node__column-button svg, .table-node__column-button img { flex-shrink: 0; width: 16px; height: 16px; color: var(--muted); }
 .table-node__column-button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.table-node__column-button.is-unconnected { cursor: default; }
 .table-node__column .table-node__column-button:hover { background: transparent; }
 .table-node__column:not(.is-active):hover { background: #fafafa; }
 .table-node__column.is-active, .table-node__column.is-active button { background: var(--brand-light); }

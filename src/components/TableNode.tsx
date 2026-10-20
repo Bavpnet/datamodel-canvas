@@ -47,9 +47,13 @@ export function TableNode({ id, data, width }: NodeProps<TableFlowNode>) {
         <button className="table-node__collapse nodrag" onClick={(event) => { event.stopPropagation(); onCollapsedChange?.(id, !collapsed) }} aria-label={`${collapsed ? 'Развернуть' : 'Свернуть'} ${table.name}`} aria-expanded={!collapsed}><DesignIcon name={collapsed ? 'down' : 'up'} /></button>
       </header>
       {!collapsed && <div className="table-node__columns-viewport nodrag nowheel nopan" tabIndex={0} role="region" aria-label={`Столбцы таблицы ${table.name}`}>
-        <ul className="table-node__columns">{table.columns.map((column) => <li key={column.id} data-column-id={column.id} className={`table-node__column ${activeColumnIds.includes(column.id) ? 'is-active' : ''}`}>
-          <button className="table-node__column-button nodrag" onClick={(event) => { event.stopPropagation(); onSelectField?.(table.id, column.id) }} aria-pressed={activeColumnIds.includes(column.id)} title={`${column.name} · ${column.typeLabel}`}><KindIcon kind={column.kind} /><span>{column.name}</span></button>
-        </li>)}</ul>
+        <ul className="table-node__columns">{table.columns.map((column) => {
+          const connected = connections.some((connection) => connection.columnId === column.id)
+          const Field = connected ? 'button' : 'span'
+          return <li key={column.id} data-column-id={column.id} className={`table-node__column ${activeColumnIds.includes(column.id) ? 'is-active' : ''}`}>
+            <Field className={`table-node__column-button nodrag ${connected ? '' : 'is-unconnected'}`} type={connected ? 'button' : undefined} onClick={connected ? (event) => { event.stopPropagation(); onSelectField?.(table.id, column.id) } : undefined} aria-pressed={connected ? activeColumnIds.includes(column.id) : undefined} title={connected ? `${column.name} · ${column.typeLabel}` : 'Нет связи'}><KindIcon kind={column.kind} /><span>{column.name}</span></Field>
+          </li>
+        })}</ul>
       </div>}
       {connections.map(renderHandle)}
     </article>

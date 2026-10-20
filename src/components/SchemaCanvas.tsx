@@ -26,9 +26,11 @@ import { EdgeBridgeProvider } from './EdgeBridgeProvider'
 import { AlignmentGuides } from './AlignmentGuides'
 import { CanvasScrollbars } from './CanvasScrollbars'
 import { CanvasControls } from './CanvasControls'
+import { CANVAS_ZOOM_LIMITS } from './zoomLimits'
 import { alignTable, type AlignmentGuide } from './snapAlignment'
 import { connectionSides } from './connectionRouting'
 import { connectionLabels } from './connectionLabels'
+import { tablesInViewport } from './viewportFocus'
 import { findFreePosition, organizeTables, separateUnconnectedTables, tableBounds } from './canvasLayout'
 import { TABLE_DND_TYPE } from '../dnd'
 import type { DemoCase } from '../data/demoCases'
@@ -117,12 +119,13 @@ export const SchemaCanvas = forwardRef<SchemaCanvasHandle, SchemaCanvasProps>(
     }, [nodes, onNodesChange, getViewport])
     const canvasElement = useRef<HTMLDivElement>(null)
     const needsFit = useRef(false)
+    const pendingRelationFocus = useRef<string[] | null>(null)
     const nodesInitialized = useNodesInitialized()
     const overviewInitialized = useRef(false)
     useEffect(() => {
       if (!nodesInitialized || overviewInitialized.current) return
       const frame = requestAnimationFrame(() => {
-        void fitView({ padding: .15, maxZoom: 1, minZoom: .05 })
+        void fitView({ padding: .15, ...CANVAS_ZOOM_LIMITS })
         overviewInitialized.current = true
       })
       return () => cancelAnimationFrame(frame)
@@ -130,26 +133,41 @@ export const SchemaCanvas = forwardRef<SchemaCanvasHandle, SchemaCanvasProps>(
     useEffect(() => {
       if (!needsFit.current) return
       const frame = requestAnimationFrame(() => {
-        void fitView({ padding: .18, duration: 300, maxZoom: 1 })
+        void fitView({ padding: .18, duration: 300, ...CANVAS_ZOOM_LIMITS })
         needsFit.current = false
       })
       return () => cancelAnimationFrame(frame)
     }, [nodes, fitView])
+    useEffect(() => {
+      const ids = pendingRelationFocus.current
+      if (!ids || !nodesInitialized) return
+      const tables = nodes.filter((node) => ids.includes(node.id))
+      if (tables.length !== ids.length) return
+      const frame = requestAnimationFrame(() => {
+        const size = canvasElement.current?.getBoundingClientRect()
+        if (!size || !size.width || !size.height) return
+        pendingRelationFocus.current = null
+        if (!tablesInViewport(tables.map(tableBounds), getViewport(), size)) {
+          void fitView({ nodes: ids.map((id) => ({ id })), padding: .18, duration: 300, ...CANVAS_ZOOM_LIMITS })
+        }
+      })
+      return () => cancelAnimationFrame(frame)
+    }, [nodes, nodesInitialized, fitView, getViewport])
     const [relationsWidth, setRelationsWidth] = useState(() => window.innerWidth < 1600 ? 400 : 520)
     const [editing, setEditing] = useState(false)
+    const [selectedFieldKey, setSelectedFieldKey] = useState<string | null>(null)
 
     const changeType = useCallback(
       (id: string, type: RelationType) => {
+        setSelectedFieldKey(null)
         setEdges((current) =>
           current.map((edge) =>
-            edge.id === id ? { ...edge, data: { ...edge.data, relationType: type } } : edge,
+            edge.id === id ? { ...edge, selected: true, data: { ...edge.data, relationType: type } } : { ...edge, selected: false },
           ),
         )
       },
       [setEdges],
     )
-
-    const [selectedFieldKey, setSelectedFieldKey] = useState<string | null>(null)
 
     const selectEdge = useCallback((id: string | null) => {
       setSelectedFieldKey(null)
@@ -277,7 +295,7 @@ export const SchemaCanvas = forwardRef<SchemaCanvasHandle, SchemaCanvasProps>(
         }
         return placed
       })
-      needsFit.current = true
+      pendingRelationFocus.current = [draft.sourceTableId, draft.targetTableId]
       const id = `rel-${crypto.randomUUID()}`
       setSelectedFieldKey(null)
       setEdges((current) => addEdge<RelationFlowEdge>({ id, source: draft.sourceTableId, target: draft.targetTableId, sourceHandle: `${draft.sourceColumnId}-source`, targetHandle: `${draft.targetColumnId}-target`, type: 'relation', selected: true, data: { relationType: draft.type } }, current.map((edge) => ({ ...edge, selected: false }))))
@@ -292,7 +310,7 @@ export const SchemaCanvas = forwardRef<SchemaCanvasHandle, SchemaCanvasProps>(
           needsFit.current = true
           setNodes((current) => organizeTables(current, edges))
         },
-        fit: () => { void fitView({ padding: .12, duration: 300 }) },
+        fit: () => { void fitView({ padding: .12, duration: 300, ...CANVAS_ZOOM_LIMITS }) },
         selectField,
       }),
       [edges, fitView, selectField, setNodes],
@@ -323,7 +341,9 @@ export const SchemaCanvas = forwardRef<SchemaCanvasHandle, SchemaCanvasProps>(
           onNodesChange={onAlignedNodesChange}
           onNodeDragStart={() => setGuides([])}
           onNodeDragStop={() => setGuides([])}
-          onEdgesChange={onEdgesChange}
+          // Relation selection is controlled by fields, edges and the empty canvas.
+          // React Flow also deselects edges when a node starts dragging; ignore that.
+          onEdgesChange={(changes) => onEdgesChange(changes.filter((change) => change.type !== 'select'))}
           nodesConnectable={false}
           edgesReconnectable={false}
           elevateEdgesOnSelect
@@ -333,13 +353,12 @@ export const SchemaCanvas = forwardRef<SchemaCanvasHandle, SchemaCanvasProps>(
           edgeTypes={edgeTypes}
           onDragOver={onDragOver}
           onDrop={onDrop}
-          minZoom={demoCase.id === 'complex' ? .05 : .25}
-          maxZoom={1.75}
+          {...CANVAS_ZOOM_LIMITS}
           proOptions={{ hideAttribution: true }}
           deleteKeyCode={null}
         >
           <Background id={`grid-${demoCase.id}`} variant={BackgroundVariant.Dots} gap={20} size={1.5} color="#a8b6c8" />
-          <CanvasControls minZoom={demoCase.id === 'complex' ? .05 : .25} />
+          <CanvasControls />
           <CanvasScrollbars nodes={nodes} canvasId={`canvas-${demoCase.id}`} />
         </ReactFlow>
         <AlignmentGuides guides={guides} />
